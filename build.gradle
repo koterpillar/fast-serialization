@@ -1,4 +1,5 @@
 import java.util.zip.ZipFile
+group="fast-serialization"
 
 apply plugin: 'java'
 apply plugin: 'maven'
