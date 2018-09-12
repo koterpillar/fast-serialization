@@ -36,7 +36,7 @@ public final class FSTOutputStream extends OutputStream {
     /**
      * The buffer where data is stored.
      */
-    public byte buf[];
+    private byte buf[];
     /**
      * The number of valid bytes in the buffer.
      */
@@ -61,11 +61,11 @@ public final class FSTOutputStream extends OutputStream {
         this.outstream = outstream;
     }
 
-    public byte[] getBuf() {
+    private byte[] getBuf() {
         return buf;
     }
 
-    public void setBuf(byte[] buf) {
+    private void setBuf(byte[] buf) {
         this.buf = buf;
     }
 

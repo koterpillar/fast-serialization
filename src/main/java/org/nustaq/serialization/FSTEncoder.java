@@ -75,7 +75,7 @@ public interface FSTEncoder {
 
     void ensureFree(int bytes) throws IOException;
 
-    byte[] getBuffer();
+//    byte[] getBuffer();
 
     void registerClass(Class possible);
 

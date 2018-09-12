@@ -57,46 +57,38 @@ public class FSTStreamEncoder implements FSTEncoder {
     void writeFBooleanArr(boolean[] arr, int off, int len) throws IOException {
         buffout.ensureFree(len);
         for (int i = off; i < off+len; i++) {
-            buffout.buf[buffout.pos++] = (byte) (arr[i] ? 1 : 0);
+            buffout.write((arr[i] ? 1 : 0));
         }
     }
 
     public void writeFFloatArr(float[] arr, int off, int len) throws IOException {
         int byteLen = arr.length * 4;
         buffout.ensureFree(byteLen);
-        byte buf[] = buffout.buf;
-        int count = buffout.pos;
         int max = off + len;
         for (int i = off; i < max; i++) {
             long anInt = Float.floatToIntBits(arr[i]);
-            buf[count] = (byte) (anInt >>> 0);
-            buf[count+1] = (byte) (anInt >>> 8);
-            buf[count+2] = (byte) (anInt >>> 16);
-            buf[count+3] = (byte) (anInt >>> 24);
-            count+=4;
+            buffout.write((int)(anInt >>> 0));
+            buffout.write((int)(anInt >>> 8));
+            buffout.write((int)(anInt >>> 16));
+            buffout.write((int)(anInt >>> 24));
         }
-        buffout.pos+= byteLen;
     }
 
     public void writeFDoubleArr(double[] arr, int off, int len) throws IOException {
         final int byteLen = arr.length * 8;
         buffout.ensureFree(byteLen);
-        final byte buf[] = buffout.buf;
-        int count = buffout.pos;
         final int max = off + len;
         for (int i = off; i < max; i++) {
             long aLong = Double.doubleToLongBits(arr[i]);
-            buf[count] = (byte) (aLong >>> 0);
-            buf[count+1] = (byte) (aLong >>> 8);
-            buf[count+2] = (byte) (aLong >>> 16);
-            buf[count+3] = (byte) (aLong >>> 24);
-            buf[count+4] = (byte) (aLong >>> 32);
-            buf[count+5] = (byte) (aLong >>> 40);
-            buf[count+6] = (byte) (aLong >>> 48);
-            buf[count+7] = (byte) (aLong >>> 56);
-            count+=8;
+            buffout.write((int) (aLong >>> 0));
+            buffout.write((int) (aLong >>> 8));
+            buffout.write((int) (aLong >>> 16));
+            buffout.write((int) (aLong >>> 24));
+            buffout.write((int) (aLong >>> 32));
+            buffout.write((int) (aLong >>> 40));
+            buffout.write((int) (aLong >>> 48));
+            buffout.write((int) (aLong >>> 56));
         }
-        buffout.pos+= byteLen;
     }
 
 
@@ -158,12 +150,11 @@ public class FSTStreamEncoder implements FSTEncoder {
         for (int i = off; i < off+len; i++) {
             short c = arr[i];
             if (c < 255 && c >= 0) {
-                buffout.buf[buffout.pos++] = (byte) c;
+                buffout.write(c);
             } else {
-                buffout.buf[buffout.pos] = (byte) 255;
-                buffout.buf[buffout.pos+1] = (byte) (c >>> 0);
-                buffout.buf[buffout.pos+2] = (byte) (c >>> 8);
-                buffout.pos += 3;
+                buffout.write(255);
+                buffout.write(c >>> 0);
+                buffout.write(c >>> 8);
             }
         }
     }
@@ -173,14 +164,11 @@ public class FSTStreamEncoder implements FSTEncoder {
         for (int i = off; i < off+len; i++) {
             char c = arr[i];
             if (c < 255 && c >= 0) {
-                buffout.buf[buffout.pos++] = (byte) c;
+                buffout.write(c);
             } else {
-                byte[] buf = buffout.buf;
-                int count = buffout.pos;
-                buf[count] = (byte) 255;
-                buf[count+1] = (byte) (c >>> 0);
-                buf[count+2] = (byte) (c >>> 8);
-                buffout.pos += 3;
+                buffout.write(255);
+                buffout.write(c >>> 0);
+                buffout.write(c >>> 8);
             }
         }
     }
@@ -189,64 +177,53 @@ public class FSTStreamEncoder implements FSTEncoder {
     public void writeFIntArr(int[] arr, int off, int len) throws IOException {
         int byteLen = arr.length * 4;
         buffout.ensureFree(byteLen);
-        byte buf[] = buffout.buf;
-        int count = buffout.pos;
         int max = off + len;
         for (int i = off; i < max; i++) {
             long anInt = arr[i];
-            buf[count] = (byte) (anInt >>> 0);
-            buf[count+1] = (byte) (anInt >>> 8);
-            buf[count+2] = (byte) (anInt >>> 16);
-            buf[count+3] = (byte) (anInt >>> 24);
-            count+=4;
+            buffout.write((byte) (anInt >>> 0));
+            buffout.write((byte) (anInt >>> 8));
+            buffout.write((byte) (anInt >>> 16));
+            buffout.write((byte) (anInt >>> 24));
         }
-        buffout.pos+= byteLen;
     }
 
     // compressed version
     public void _writeFIntArr(int v[], int off, int len) throws IOException {
         final int free = 5 * len;
         buffout.ensureFree(free);
-        final byte[] buf = buffout.buf;
-        int count = buffout.pos;
         for (int i = off; i < off+len; i++) {
             final int anInt = v[i];
             if ( anInt > -127 && anInt <=127 ) {
-                buffout.buf[count++] = (byte)anInt;
+                buffout.write(anInt);
             } else
             if ( anInt >= Short.MIN_VALUE && anInt <= Short.MAX_VALUE ) {
-                buf[count++] = -128;
-                buf[count++] = (byte) ((anInt >>>  0) & 0xFF);
-                buf[count++] = (byte) ((anInt >>> 8) & 0xFF);
+                buffout.write(-128);
+                buffout.write((byte) ((anInt >>>  0) & 0xFF));
+                buffout.write((byte) ((anInt >>> 8) & 0xFF));
             } else {
-                buf[count++] = -127;
-                buf[count++] = (byte) ((anInt >>>  0) & 0xFF);
-                buf[count++] = (byte) ((anInt >>>  8) & 0xFF);
-                buf[count++] = (byte) ((anInt >>> 16) & 0xFF);
-                buf[count++] = (byte) ((anInt >>> 24) & 0xFF);
+                buffout.write(-127);
+                buffout.write((byte) ((anInt >>>  0) & 0xFF));
+                buffout.write((byte) ((anInt >>>  8) & 0xFF));
+                buffout.write((byte) ((anInt >>> 16) & 0xFF));
+                buffout.write((byte) ((anInt >>> 24) & 0xFF));
             }
         }
-        buffout.pos = count;
     }
 
     void writeFLongArr(long[] arr, int off, int len) throws IOException {
         int byteLen = arr.length * 8;
         buffout.ensureFree(byteLen);
-        byte buf[] = buffout.buf;
-        int count = buffout.pos;
         for (int i = off; i < off+len; i++) {
             long anInt = arr[i];
-            buf[count] = (byte) (anInt >>> 0);
-            buf[count+1] = (byte) (anInt >>> 8);
-            buf[count+2] = (byte) (anInt >>> 16);
-            buf[count+3] = (byte) (anInt >>> 24);
-            buf[count+4] = (byte) (anInt >>> 32);
-            buf[count+5] = (byte) (anInt >>> 40);
-            buf[count+6] = (byte) (anInt >>> 48);
-            buf[count+7] = (byte) (anInt >>> 56);
-            count += 8;
+            buffout.write((byte) (anInt >>> 0) );
+            buffout.write((byte) (anInt >>> 8) );
+            buffout.write((byte) (anInt >>> 16));
+            buffout.write((byte) (anInt >>> 24));
+            buffout.write((byte) (anInt >>> 32));
+            buffout.write((byte) (anInt >>> 40));
+            buffout.write((byte) (anInt >>> 48));
+            buffout.write((byte) (anInt >>> 56));
         }
-        buffout.pos+= byteLen;
     }
 
     /**
@@ -295,9 +272,7 @@ public class FSTStreamEncoder implements FSTEncoder {
      * @throws java.io.IOException
      */
     public void writeRawBytes(byte[] array, int start, int length) throws IOException {
-        buffout.ensureFree(length);
-        System.arraycopy(array, start, buffout.buf, buffout.pos, length);
-        buffout.pos += length;
+        buffout.write(array, start, length);
     }
 
     @Override
@@ -306,18 +281,16 @@ public class FSTStreamEncoder implements FSTEncoder {
 
         writeFInt(strlen);
         buffout.ensureFree(strlen*3);
-        final byte[] bytearr = buffout.buf;
-        int count = buffout.pos;
         for (int i=0; i<strlen; i++) {
             final char c = str.charAt(i);
-            bytearr[count++] = (byte)c;
-            if ( c >= 255) {
-                bytearr[count-1] = (byte)255;
-                bytearr[count++] = (byte) ((c >>> 0) & 0xFF);
-                bytearr[count++] = (byte) ((c >>> 8) & 0xFF);
+            if (c < 255) {
+                buffout.write(c);
+            } else {
+                buffout.write(255);
+                buffout.write((byte) ((c >>> 0) & 0xFF));
+                buffout.write((byte) ((c >>> 8) & 0xFF));
             }
         }
-        buffout.pos = count;
     }
     
     /**
@@ -362,51 +335,37 @@ public class FSTStreamEncoder implements FSTEncoder {
     public void writeFChar(char c) throws IOException {
         // -128 = short byte, -127 == 4 byte
         if (c < 255 && c >= 0) {
-            buffout.ensureFree(1);
-            buffout.buf[buffout.pos++] = (byte) c;
+            buffout.write(c);
         } else {
             buffout.ensureFree(3);
-            byte[] buf = buffout.buf;
-            int count = buffout.pos;
-            buf[count++] = (byte) 255;
-            buf[count++] = (byte) (c >>> 0);
-            buf[count++] = (byte) (c >>> 8);
-            buffout.pos += 3;
+            buffout.write(255);
+            buffout.write((byte) (c >>> 0));
+            buffout.write((byte) (c >>> 8));
         }
     }
 
     @Override
     public final void writeFByte(int v) throws IOException {
-        buffout.ensureFree(1);
-        buffout.buf[buffout.pos++] = (byte) v;
+        buffout.write(v);
     }
 
     @Override
     public void writeFInt(int anInt) throws IOException {
         // -128 = short byte, -127 == 4 byte
         if (anInt > -127 && anInt <= 127) {
-            if (buffout.buf.length <= buffout.pos + 1) {
-                buffout.ensureFree(1);
-            }
-            buffout.buf[buffout.pos++] = (byte) anInt;
+            buffout.write(anInt);
         } else if (anInt >= Short.MIN_VALUE && anInt <= Short.MAX_VALUE) {
             ensureFree(3);
-            byte[] buf = buffout.buf;
-            int count = buffout.pos;
-            buf[count++] = (byte) -128;
-            buf[count++] = (byte) (anInt >>> 0);
-            buf[count++] = (byte) (anInt >>> 8);
-            buffout.pos = count;
+            buffout.write(-128);
+            buffout.write((byte) (anInt >>> 0));
+            buffout.write((byte) (anInt >>> 8));
         } else {
             buffout.ensureFree(5);
-            byte[] buf = buffout.buf;
-            int count = buffout.pos;
-            buf[count++] = (byte) -127;
-            buf[count++] = (byte) ((anInt >>> 0) & 0xFF);
-            buf[count++] = (byte) ((anInt >>>  8) & 0xFF);
-            buf[count++] = (byte) ((anInt >>> 16) & 0xFF);
-            buf[count++] = (byte) ((anInt >>> 24) & 0xFF);
-            buffout.pos = count;
+            buffout.write((byte) -127);
+            buffout.write((byte) ((anInt >>> 0) & 0xFF));
+            buffout.write((byte) ((anInt >>>  8) & 0xFF));
+            buffout.write((byte) ((anInt >>> 16) & 0xFF));
+            buffout.write((byte) ((anInt >>> 24) & 0xFF));
         }
     }
 
@@ -417,36 +376,27 @@ public class FSTStreamEncoder implements FSTEncoder {
             writeFByte((int) anInt);
         } else if (anInt >= Short.MIN_VALUE && anInt <= Short.MAX_VALUE) {
             ensureFree(3);
-            byte[] buf = buffout.buf;
-            int count = buffout.pos;
-            buf[count++] = (byte) -128;
-            buf[count++] = (byte) (anInt >>> 0);
-            buf[count++] = (byte) (anInt >>> 8);
-            buffout.pos = count;
+            buffout.write((byte) -128);
+            buffout.write((byte) (anInt >>> 0));
+            buffout.write((byte) (anInt >>> 8));
         } else if (anInt >= Integer.MIN_VALUE && anInt <= Integer.MAX_VALUE) {
             buffout.ensureFree(5);
-            byte[] buf = buffout.buf;
-            int count = buffout.pos;
-            buf[count++] = (byte) -127;
-            buf[count++] = (byte) ((anInt >>> 0) & 0xFF);
-            buf[count++] = (byte) ((anInt >>>  8) & 0xFF);
-            buf[count++] = (byte) ((anInt >>> 16) & 0xFF);
-            buf[count++] = (byte) ((anInt >>> 24) & 0xFF);
-            buffout.pos = count;
+            buffout.write((byte) -127);
+            buffout.write((byte) ((anInt >>> 0) & 0xFF));
+            buffout.write((byte) ((anInt >>>  8) & 0xFF));
+            buffout.write((byte) ((anInt >>> 16) & 0xFF));
+            buffout.write((byte) ((anInt >>> 24) & 0xFF));
         } else {
             buffout.ensureFree(9);
-            byte[] buf = buffout.buf;
-            int count = buffout.pos;
-            buf[count++] = (byte) -126;
-            buf[count++] = (byte) (anInt >>> 0);
-            buf[count++] = (byte) (anInt >>> 8);
-            buf[count++] = (byte) (anInt >>> 16);
-            buf[count++] = (byte) (anInt >>> 24);
-            buf[count++] = (byte) (anInt >>> 32);
-            buf[count++] = (byte) (anInt >>> 40);
-            buf[count++] = (byte) (anInt >>> 48);
-            buf[count++] = (byte) (anInt >>> 56);
-            buffout.pos = count;
+            buffout.write((byte) -126);
+            buffout.write((byte) (anInt >>> 0));
+            buffout.write((byte) (anInt >>> 8));
+            buffout.write((byte) (anInt >>> 16));
+            buffout.write((byte) (anInt >>> 24));
+            buffout.write((byte) (anInt >>> 32));
+            buffout.write((byte) (anInt >>> 40));
+            buffout.write((byte) (anInt >>> 48));
+            buffout.write((byte) (anInt >>> 56));
         }
     }
 
@@ -573,14 +523,14 @@ public class FSTStreamEncoder implements FSTEncoder {
         buffout.ensureFree(8);
         byte[] buf = buffout.buf;
         int count = buffout.pos;
-        buf[count++] = (byte) (v >>> 0);
-        buf[count++] = (byte) (v >>> 8);
-        buf[count++] = (byte) (v >>> 16);
-        buf[count++] = (byte) (v >>> 24);
-        buf[count++] = (byte) (v >>> 32);
-        buf[count++] = (byte) (v >>> 40);
-        buf[count++] = (byte) (v >>> 48);
-        buf[count++] = (byte) (v >>> 56);
+        buffout.write((byte) (v >>> 0));
+        buffout.write((byte) (v >>> 8));
+        buffout.write((byte) (v >>> 16));
+        buffout.write((byte) (v >>> 24));
+        buffout.write((byte) (v >>> 32));
+        buffout.write((byte) (v >>> 40));
+        buffout.write((byte) (v >>> 48));
+        buffout.write((byte) (v >>> 56));
         buffout.pos += 8;
     }
 
@@ -588,8 +538,8 @@ public class FSTStreamEncoder implements FSTEncoder {
         buffout.ensureFree(2);
         byte[] buf = buffout.buf;
         int count = buffout.pos;
-        buf[count++] = (byte) (v >>> 0);
-        buf[count++] = (byte) (v >>> 8);
+        buffout.write((byte) (v >>> 0));
+        buffout.write((byte) (v >>> 8));
         buffout.pos += 2;
     }
 
@@ -597,8 +547,8 @@ public class FSTStreamEncoder implements FSTEncoder {
         buffout.ensureFree(2);
         byte[] buf = buffout.buf;
         int count = buffout.pos;
-        buf[count++] = (byte) (v >>> 0);
-        buf[count++] = (byte) (v >>> 8);
+        buffout.write((byte) (v >>> 0));
+        buffout.write((byte) (v >>> 8));
         buffout.pos += 2;
     }
 
@@ -606,10 +556,10 @@ public class FSTStreamEncoder implements FSTEncoder {
         buffout.ensureFree(4);
         byte[] buf = buffout.buf;
         int count = buffout.pos;
-        buf[count++] = (byte) ((v >>> 0) & 0xFF);
-        buf[count++] = (byte) ((v >>>  8) & 0xFF);
-        buf[count++] = (byte) ((v >>> 16) & 0xFF);
-        buf[count++] = (byte) ((v >>> 24) & 0xFF);
+        buffout.write((byte) ((v >>> 0) & 0xFF));
+        buffout.write((byte) ((v >>>  8) & 0xFF));
+        buffout.write((byte) ((v >>> 16) & 0xFF));
+        buffout.write((byte) ((v >>> 24) & 0xFF));
         buffout.pos = count;
     }
 

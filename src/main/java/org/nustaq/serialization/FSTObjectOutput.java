@@ -1079,18 +1079,18 @@ public class FSTObjectOutput implements ObjectOutput {
         return objects;
     }
 
-    /**
-     * @return the written buffer reference. use getWritten() to obtain the length of written bytes. WARNING:
-     * if more than one objects have been written, an implicit flush is triggered, so the buffer only contains
-     * the last written object. getWritten() then has a larger size than the buffer length.
-     * only usable if one single object is written to the stream (e.g. messaging)
-     *
-     * note: in case of non-standard underlyings (e.g. serializing to direct offheap or DirectBuffer, this method
-     * might cause creation of a byte array and a copy.
-     */
-    public byte[] getBuffer() {
-        return getCodec().getBuffer();
-    }
+//    /**
+//     * @return the written buffer reference. use getWritten() to obtain the length of written bytes. WARNING:
+//     * if more than one objects have been written, an implicit flush is triggered, so the buffer only contains
+//     * the last written object. getWritten() then has a larger size than the buffer length.
+//     * only usable if one single object is written to the stream (e.g. messaging)
+//     *
+//     * note: in case of non-standard underlyings (e.g. serializing to direct offheap or DirectBuffer, this method
+//     * might cause creation of a byte array and a copy.
+//     */
+//    public byte[] getBuffer() {
+//        return getCodec().getBuffer();
+//    }
 
     /**
      * @return a copy of written bytes. 
